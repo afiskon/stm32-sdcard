@@ -288,7 +288,7 @@ int SDCARD_GetBlocksNumber(uint32_t* num) {
     uint32_t tmp = csd[7] & 0x3F; // two bits are reserved
     tmp = (tmp << 8) | csd[8];
     tmp = (tmp << 8) | csd[9];
-    tmp = (tmp + 1) << 10;
+    tmp = (tmp + 1) << 9;
     *num = tmp;
 
     return 0;
