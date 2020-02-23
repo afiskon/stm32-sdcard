@@ -1,6 +1,7 @@
 /* vim: set ai et ts=4 sw=4: */
 
 #include "sdcard.h"
+#include <string.h>
 
 static void SDCARD_Select() {
     HAL_GPIO_WritePin(SDCARD_CS_GPIO_Port, SDCARD_CS_Pin, GPIO_PIN_RESET);
@@ -88,10 +89,11 @@ int SDCARD_Init() {
     */
     SDCARD_Unselect();
 
-    uint8_t high = 0xFF;
-    for(int i = 0; i < 10; i++) { // 80 clock pulses
-        HAL_SPI_Transmit(&SDCARD_SPI_PORT, &high, sizeof(high), HAL_MAX_DELAY);
-    }
+    uint8_t dummy[10];
+    memset(dummy, 0xFF, 10);
+
+    // 80 clock pulses
+    HAL_SPI_Transmit(&SDCARD_SPI_PORT, dummy, sizeof(dummy), HAL_MAX_DELAY);
 
     SDCARD_Select();
 
@@ -106,12 +108,18 @@ int SDCARD_Init() {
     }
 
     {
-        static const uint8_t cmd[] =
-            { 0x40 | 0x00 /* CMD0 */, 0x00, 0x00, 0x00, 0x00 /* ARG = 0 */, (0x4A << 1) | 1 /* CRC7 + end bit */ };
+        static const uint8_t cmd[] = {
+            0xFF, /* DUMMY */
+            0x40 | 0x00 /* CMD0 */,
+            0x00, 0x00, 0x00, 0x00 /* ARG = 0 */,
+            (0x4A << 1) | 1, /* CRC7 + end bit */
+            0xFF /* DUMMY */
+        };
         HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
     }
 
-    if(SDCARD_ReadR1() != 0x01) {
+    if(SDCARD_ReadR1() != 0x01)
+    {
         SDCARD_Unselect();
         return -1;
     }
@@ -133,8 +141,13 @@ int SDCARD_Init() {
     }
 
     {
-        static const uint8_t cmd[] =
-            { 0x40 | 0x08 /* CMD8 */, 0x00, 0x00, 0x01, 0xAA /* ARG */, (0x43 << 1) | 1 /* CRC7 + end bit */ };
+        static const uint8_t cmd[] = {
+            0xFF, /* DUMMY */
+            0x40 | 0x08 /* CMD8 */,
+            0x00, 0x00, 0x01, 0xAA /* ARG */,
+            (0x43 << 1) | 1, /* CRC7 + end bit */
+            0xFF /* DUMMY */
+        };
         HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
     }
 
@@ -168,8 +181,13 @@ int SDCARD_Init() {
         }
 
         {
-            static const uint8_t cmd[] =
-                { 0x40 | 0x37 /* CMD55 */, 0x00, 0x00, 0x00, 0x00 /* ARG */, (0x7F << 1) | 1 /* CRC7 + end bit */ };
+            static const uint8_t cmd[] = {
+                0xFF, /* DUMMY */
+                0x40 | 0x37 /* CMD55 */,
+                0x00, 0x00, 0x00, 0x00 /* ARG */,
+                (0x7F << 1) | 1, /* CRC7 + end bit */
+                0xFF /* DUMMY */
+            };
             HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
         }
 
@@ -184,8 +202,13 @@ int SDCARD_Init() {
         }
 
         {
-            static const uint8_t cmd[] =
-                { 0x40 | 0x29 /* ACMD41 */, 0x40, 0x00, 0x00, 0x00 /* ARG */, (0x7F << 1) | 1 /* CRC7 + end bit */ };
+            static const uint8_t cmd[] = {
+                0xFF, /* DUMMY */
+                0x40 | 0x29 /* ACMD41 */,
+                0x40, 0x00, 0x00, 0x00 /* ARG */,
+                (0x7F << 1) | 1, /* CRC7 + end bit */
+                0xFF /* DUMMY */
+            };
             HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
         }
 
@@ -213,8 +236,13 @@ int SDCARD_Init() {
     }
 
     {
-        static const uint8_t cmd[] =
-            { 0x40 | 0x3A /* CMD58 */, 0x00, 0x00, 0x00, 0x00 /* ARG */, (0x7F << 1) | 1 /* CRC7 + end bit */ };
+        static const uint8_t cmd[] = {
+            0xFF, /* DUMMY */
+            0x40 | 0x3A /* CMD58 */,
+            0x00, 0x00, 0x00, 0x00 /* ARG */,
+            (0x7F << 1) | 1, /* CRC7 + end bit */
+            0xFF /* DUMMY */
+        };
         HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
     }
 
@@ -254,8 +282,13 @@ int SDCARD_GetBlocksNumber(uint32_t* num) {
 
     /* CMD9 (SEND_CSD) command */
     {
-        static const uint8_t cmd[] =
-            { 0x40 | 0x09 /* CMD9 */, 0x00, 0x00, 0x00, 0x00 /* ARG */, (0x7F << 1) | 1 /* CRC7 + end bit */ };
+        static const uint8_t cmd[] = {
+            0xFF, /* DUMMY */
+            0x40 | 0x09 /* CMD9 */,
+            0x00, 0x00, 0x00, 0x00 /* ARG */,
+            (0x7F << 1) | 1, /* CRC7 + end bit */
+            0xFF /* DUMMY */
+        };
         HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
     }
 
@@ -306,12 +339,14 @@ int SDCARD_ReadSingleBlock(uint32_t blockNum, uint8_t* buff) {
 
     /* CMD17 (SEND_SINGLE_BLOCK) command */
     uint8_t cmd[] = {
+        0xFF, /* DUMMY */
         0x40 | 0x11 /* CMD17 */,
         (blockNum >> 24) & 0xFF, /* ARG */
         (blockNum >> 16) & 0xFF,
         (blockNum >> 8) & 0xFF,
         blockNum & 0xFF,
-        (0x7F << 1) | 1 /* CRC7 + end bit */
+        (0x7F << 1) | 1, /* CRC7 + end bit */
+        0xFF /* DUMMY */
     };
     HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
 
@@ -350,12 +385,14 @@ int SDCARD_WriteSingleBlock(uint32_t blockNum, const uint8_t* buff) {
 
     /* CMD24 (WRITE_BLOCK) command */
     uint8_t cmd[] = {
+        0xFF, /* DUMMY */
         0x40 | 0x18 /* CMD24 */,
         (blockNum >> 24) & 0xFF, /* ARG */
         (blockNum >> 16) & 0xFF,
         (blockNum >> 8) & 0xFF,
         blockNum & 0xFF,
-        (0x7F << 1) | 1 /* CRC7 + end bit */
+        (0x7F << 1) | 1, /* CRC7 + end bit */
+        0xFF /* DUMMY */
     };
     HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
 
@@ -403,12 +440,14 @@ int SDCARD_ReadBegin(uint32_t blockNum) {
 
     /* CMD18 (READ_MULTIPLE_BLOCK) command */
     uint8_t cmd[] = {
+        0xFF, /* DUMMY */
         0x40 | 0x12 /* CMD18 */,
         (blockNum >> 24) & 0xFF, /* ARG */
         (blockNum >> 16) & 0xFF,
         (blockNum >> 8) & 0xFF,
         blockNum & 0xFF,
-        (0x7F << 1) | 1 /* CRC7 + end bit */
+        (0x7F << 1) | 1, /* CRC7 + end bit */
+        0xFF /* DUMMY */
     };
     HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
 
@@ -468,7 +507,7 @@ int SDCARD_ReadEnd() {
         SDCARD_Unselect();
         return -2;
     }
-    
+
     SDCARD_Unselect();
     return 0;
 }
@@ -484,12 +523,14 @@ int SDCARD_WriteBegin(uint32_t blockNum) {
 
     /* CMD25 (WRITE_MULTIPLE_BLOCK) command */
     uint8_t cmd[] = {
+        0xFF, /* DUMMY */
         0x40 | 0x19 /* CMD25 */,
         (blockNum >> 24) & 0xFF, /* ARG */
         (blockNum >> 16) & 0xFF,
         (blockNum >> 8) & 0xFF,
         blockNum & 0xFF,
-        (0x7F << 1) | 1 /* CRC7 + end bit */
+        (0x7F << 1) | 1, /* CRC7 + end bit */
+        0xFF /* DUMMY */
     };
     HAL_SPI_Transmit(&SDCARD_SPI_PORT, (uint8_t*)cmd, sizeof(cmd), HAL_MAX_DELAY);
 
@@ -553,4 +594,3 @@ int SDCARD_WriteEnd() {
     SDCARD_Unselect();
     return 0;
 }
-
