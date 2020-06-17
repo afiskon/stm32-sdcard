@@ -290,7 +290,7 @@ int SDCARD_GetBlocksNumber(uint32_t* num) {
     tmp = (tmp << 8) | csd[9];
     // Full volume: (C_SIZE+1)*512KByte == (C_SIZE+1)<<19
     // Block size: 512Byte == 1<<9
-    // Blocks number: CARD_SIZE/SECT_SIZE = (C_SIZE+1)*(1<<19) / (1<<9) = (C_SIZE+1)*(1<<10)
+    // Blocks number: CARD_SIZE/BLOCK_SIZE = (C_SIZE+1)*(1<<19) / (1<<9) = (C_SIZE+1)*(1<<10)
     tmp = (tmp + 1) << 10;
     *num = tmp;
 
